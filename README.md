@@ -1,4 +1,4 @@
-# nordpool-influxdb
+# nordpool-influxdb-2
 
 A collection of scripts for storing Nordpool price data in InfluxDB
 
@@ -9,35 +9,38 @@ This repository contains a collection of scripts for storing Nordpool price data
 
 ## Usage
 
-### fetch-prices-json.js
+### Set environment variables
+```
+AREA=EE
+CURRENCY=EUR
+
+INFLUX_HOST=homelab.local
+INFLUX_ORG=HomeLab
+INFLUX_BUCKET=Nordpool
+INFLUX_TOKEN=myadmintoken
+```
+
+### fetch prices from Nordpool
 
 ```bash
-AREA=FI CURRENCY=EUR node scripts/fetch-prices-json.js > nordpool.json
+npm run fetch
 ```
 
 The JSON is an array of objects like this:
 
 ```json
 {
-  "area": "FI",
+  "area": "EE",
   "date": 1581890400000,
   "value": 8.39
 }
 ```
 
-### update-influxdb.js
-
-```
-INFLUX_HOST=10.110.1.6 INFLUX_DATABASE=nordpool INFLUX_USERNAME=nordpool INFLUX_PASSWORD=nordpool node scripts/update-influxdb.js < nordpool.json
-```
-
-You can combine both scripts like this:
+Fetch and push to influxdb
 
 ```bash
-AREA=FI CURRENCY=EUR node scripts/fetch-prices-json.js | INFLUX_HOST=10.110.1.6 INFLUX_DATABASE=nordpool INFLUX_USERNAME=nordpool INFLUX_PASSWORD=nordpool node scripts/update-influxdb.js
+npm run push
 ```
-
-This can be useful when running from cron.
 
 ## License
 

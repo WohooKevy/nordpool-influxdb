@@ -1,11 +1,11 @@
 const fs = require('fs')
-const Influx = require('influx')
+const { InfluxDB, Point } = require('@influxdata/influxdb-client')
 
 const requiredEnvVars = [
   'INFLUX_HOST',
-  'INFLUX_DATABASE',
-  'INFLUX_USERNAME',
-  'INFLUX_PASSWORD',
+  'INFLUX_BUCKET',
+  'INFLUX_TOKEN',
+  'INFLUX_ORG',
 ]
 
 for (const envVar of requiredEnvVars) {
@@ -17,37 +17,26 @@ for (const envVar of requiredEnvVars) {
 const jsonData = fs.readFileSync(0, 'utf-8')
 const prices = JSON.parse(jsonData)
 
-const influx = new Influx.InfluxDB({
-  host: process.env.INFLUX_HOST,
-  database: process.env.INFLUX_DATABASE,
-  username: process.env.INFLUX_USERNAME,
-  password: process.env.INFLUX_PASSWORD,
-  schema: [
-    {
-      measurement: 'prices',
-      fields: {
-        value: Influx.FieldType.FLOAT
-      },
-      tags: [
-        'area'
-      ]
-    }
-  ]
+// Set up the InfluxDB 2.x client
+const influxDB = new InfluxDB({
+  url: `http://${process.env.INFLUX_HOST}:8086`,  // Assuming InfluxDB 2.x is running on port 8086
+  token: process.env.INFLUX_TOKEN,
 })
 
-influx.getDatabaseNames().then((names) => {
-  if (!names.includes(process.env.INFLUX_DATABASE)) {
-    throw new Error(`The specified database "${process.env.INFLUX_DATABASE}" does not exist`)
-  }
+const writeApi = influxDB.getWriteApi(process.env.INFLUX_ORG, process.env.INFLUX_BUCKET)
 
-  for (const point of prices) {
-    influx.writePoints([
-      {
-        measurement: 'prices',
-        tags: { area: point.area },
-        fields: { value: point.value },
-        timestamp: point.date * 1000 * 1000 * 1000, // nanoseconds
-      }
-    ])
-  }
+// Writing points to InfluxDB
+prices.forEach(point => {
+  const influxPoint = new Point('prices')
+      .tag('area', point.area)
+      .floatField('value', point.value)
+      .timestamp(new Date(point.date * 1000))  // Timestamp in milliseconds
+  writeApi.writePoint(influxPoint)
+})
+
+// Close the connection and ensure data is written
+writeApi.close().then(() => {
+  console.log('Data written successfully')
+}).catch(e => {
+  console.error('Error writing data', e)
 })
