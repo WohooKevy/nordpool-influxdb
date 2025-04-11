@@ -10,6 +10,8 @@ for (const envVar of requiredEnvVars) {
 }
 
 const now = new Date()
+now.setDate(now.getDate() + 1); // Tomorrow's prices
+
 const year = now.getFullYear()
 const month = now.getMonth() + 1
 const day = now.getDate()

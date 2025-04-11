@@ -1,4 +1,4 @@
-# nordpool-influxdb-2
+# nordpool-influxdb
 
 A collection of scripts for storing Nordpool price data in InfluxDB
 
@@ -14,10 +14,10 @@ This repository contains a collection of scripts for storing Nordpool price data
 AREA=EE
 CURRENCY=EUR
 
-INFLUX_HOST=homelab.local
-INFLUX_ORG=HomeLab
-INFLUX_BUCKET=Nordpool
-INFLUX_TOKEN=myadmintoken
+INFLUX_HOST=localhost
+INFLUX_DB=nordpool
+INFLUX_USERNAME=admin
+INFLUX_PASSWORD=supersecurepassword
 ```
 
 ### fetch prices from Nordpool

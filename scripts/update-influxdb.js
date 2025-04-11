@@ -1,11 +1,11 @@
 const fs = require('fs')
-const { InfluxDB, Point } = require('@influxdata/influxdb-client')
+const { InfluxDB, FieldType } = require('influx')
 
 const requiredEnvVars = [
   'INFLUX_HOST',
-  'INFLUX_BUCKET',
-  'INFLUX_TOKEN',
-  'INFLUX_ORG',
+  'INFLUX_DB',
+  'INFLUX_USERNAME',
+  'INFLUX_PASSWORD',
 ]
 
 for (const envVar of requiredEnvVars) {
@@ -14,29 +14,39 @@ for (const envVar of requiredEnvVars) {
   }
 }
 
+// Read data from stdin
 const jsonData = fs.readFileSync(0, 'utf-8')
 const prices = JSON.parse(jsonData)
 
-// Set up the InfluxDB 2.x client
-const influxDB = new InfluxDB({
-  url: `http://${process.env.INFLUX_HOST}:8086`,  // Assuming InfluxDB 2.x is running on port 8086
-  token: process.env.INFLUX_TOKEN,
+// Set up the InfluxDB 1.x client
+const influx = new InfluxDB({
+  host: process.env.INFLUX_HOST,
+  database: process.env.INFLUX_DB,
+  username: process.env.INFLUX_USERNAME,
+  password: process.env.INFLUX_PASSWORD,
+  schema: [
+    {
+      measurement: 'prices',
+      fields: {
+        value: FieldType.FLOAT,
+      },
+      tags: ['area'],
+    },
+  ],
 })
 
-const writeApi = influxDB.getWriteApi(process.env.INFLUX_ORG, process.env.INFLUX_BUCKET)
+// Write points
+const points = prices.map(point => ({
+  measurement: 'prices',
+  tags: { area: point.area },
+  fields: { value: point.value },
+  timestamp: new Date(point.date * 1000),
+}))
 
-// Writing points to InfluxDB
-prices.forEach(point => {
-  const influxPoint = new Point('prices')
-      .tag('area', point.area)
-      .floatField('value', point.value)
-      .timestamp(new Date(point.date * 1000))  // Timestamp in milliseconds
-  writeApi.writePoint(influxPoint)
-})
-
-// Close the connection and ensure data is written
-writeApi.close().then(() => {
-  console.log('Data written successfully')
-}).catch(e => {
-  console.error('Error writing data', e)
-})
+influx.writePoints(points)
+    .then(() => {
+      console.log('Data written successfully')
+    })
+    .catch(e => {
+      console.error('Error writing data', e)
+    })

@@ -1,5 +1,5 @@
 {
-  "name": "nordpool-influxdb-2",
+  "name": "nordpool-influxdb",
   "version": "1.0.0",
   "description": "A collection of scripts for storing Nordpool price data in InfluxDB",
   "main": "scripts/fetch-prices-json.js",
@@ -14,6 +14,6 @@
     "url": "https://github.com/Jalle19/nordpool-influxdb.git"
   },
   "dependencies": {
-    "@influxdata/influxdb-client": "latest"
+    "influx": "^5.10.0"
   }
 }
